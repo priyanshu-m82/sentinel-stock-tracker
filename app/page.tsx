@@ -1,7 +1,13 @@
-export default function Home() {
-  return (
-      <main>
-        <h1>Sentinel</h1>
-      </main>
-  );
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+
+export default async function HomePage() {
+    const session = await auth.api.getSession({ headers: await headers() });
+
+    if (session?.user) {
+        redirect("/dashboard");
+    } else {
+        redirect("/sign-in");
+    }
 }
