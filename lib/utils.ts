@@ -21,7 +21,9 @@ export function formatMarketCap(value: number): string {
   return `$${value.toFixed(2)}`;
 }
 
-export function formatPercent(value: number): string {
+export function formatPercent(value?: number): string {
+  if (typeof value !== "number") return "N/A";
+
   const sign = value >= 0 ? "+" : "";
   return `${sign}${value.toFixed(2)}%`;
 }
