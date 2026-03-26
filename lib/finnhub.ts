@@ -5,11 +5,14 @@ const API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY!;
 
 const finnhub = axios.create({
     baseURL: BASE_URL,
+    timeout: 10000,
     params: { token: API_KEY },
 });
 
 export async function getStockQuote(symbol: string) {
-    const { data } = await finnhub.get("/quote", { params: { symbol } });
+    const { data } = await finnhub.get("/quote", {
+        params: { symbol },
+    });
     return data;
 }
 
@@ -22,14 +25,19 @@ export async function getStockProfile(symbol: string) {
 
 export async function getStockCandles(
     symbol: string,
-    resolution: string = "D",
+    resolution: string,
     from: number,
     to: number
 ) {
-    const { data } = await finnhub.get("/stock/candle", {
-        params: { symbol, resolution, from, to },
-    });
-    return data;
+    try {
+        const { data } = await finnhub.get("/stock/candle", {
+            params: { symbol, resolution, from, to },
+        });
+        return data;
+    } catch (error: any) {
+        console.error("Finnhub candle error:", error?.response?.data || error.message);
+        return { s: "no_data" };
+    }
 }
 
 export async function getCompanyNews(
@@ -44,20 +52,15 @@ export async function getCompanyNews(
 }
 
 export async function searchStocks(query: string) {
-    const { data } = await finnhub.get("/search", { params: { q: query } });
+    const { data } = await finnhub.get("/search", {
+        params: { q: query },
+    });
     return data;
 }
 
 export async function getBasicFinancials(symbol: string) {
     const { data } = await finnhub.get("/stock/metric", {
         params: { symbol, metric: "all" },
-    });
-    return data;
-}
-
-export async function getRecommendationTrends(symbol: string) {
-    const { data } = await finnhub.get("/stock/recommendation", {
-        params: { symbol },
     });
     return data;
 }

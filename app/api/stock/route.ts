@@ -6,7 +6,6 @@ import {
     getCompanyNews,
     searchStocks,
     getBasicFinancials,
-    getRecommendationTrends,
 } from "@/lib/finnhub";
 
 export async function GET(request: NextRequest) {
@@ -14,46 +13,73 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type");
     const symbol = searchParams.get("symbol");
 
+    if (!type) {
+        return NextResponse.json({ error: "type is required" }, { status: 400 });
+    }
+
     try {
         switch (type) {
-            case "quote":
-                const quote = await getStockQuote(symbol!);
-                return NextResponse.json(quote);
+            case "quote": {
+                if (!symbol) return NextResponse.json({ error: "symbol required" }, { status: 400 });
+                const data = await getStockQuote(symbol);
+                return NextResponse.json(data);
+            }
 
-            case "profile":
-                const profile = await getStockProfile(symbol!);
-                return NextResponse.json(profile);
+            case "profile": {
+                if (!symbol) return NextResponse.json({ error: "symbol required" }, { status: 400 });
+                const data = await getStockProfile(symbol);
+                return NextResponse.json(data);
+            }
 
-            case "candles":
+            case "candles": {
+                if (!symbol) {
+                    return NextResponse.json({ error: "symbol required" }, { status: 400 });
+                }
                 const resolution = searchParams.get("resolution") || "D";
-                const from = parseInt(searchParams.get("from") || "0");
-                const to = parseInt(searchParams.get("to") || "0");
-                const candles = await getStockCandles(symbol!, resolution, from, to);
-                return NextResponse.json(candles);
+                const to = Math.floor(Date.now() / 1000);
+                // Use longer range to ensure data exists
+                const daysMap: Record<string, number> = {
+                    "60": 10,
+                    "D": 180,
+                    "W": 730,
+                };
+                const days = daysMap[resolution] ?? 180;
+                const from = to - days * 24 * 60 * 60;
 
-            case "news":
+                try {
+                    const data = await getStockCandles(symbol, resolution, from, to);
+                    return NextResponse.json(data);
+                } catch (error: any) {
+                    console.error("Candle route error:", error.message);
+                    return NextResponse.json({ s: "no_data" }, { status: 200 });
+                }
+            }
+
+            case "news": {
+                if (!symbol) return NextResponse.json({ error: "symbol required" }, { status: 400 });
                 const fromDate = searchParams.get("from") || "";
                 const toDate = searchParams.get("to") || "";
-                const news = await getCompanyNews(symbol!, fromDate, toDate);
-                return NextResponse.json(news);
+                const data = await getCompanyNews(symbol, fromDate, toDate);
+                return NextResponse.json(data);
+            }
 
-            case "search":
+            case "search": {
                 const query = searchParams.get("q") || "";
-                const results = await searchStocks(query);
-                return NextResponse.json(results);
+                const data = await searchStocks(query);
+                return NextResponse.json(data);
+            }
 
-            case "financials":
-                const financials = await getBasicFinancials(symbol!);
-                return NextResponse.json(financials);
-
-            case "recommendations":
-                const recommendations = await getRecommendationTrends(symbol!);
-                return NextResponse.json(recommendations);
+            case "financials": {
+                if (!symbol) return NextResponse.json({ error: "symbol required" }, { status: 400 });
+                const data = await getBasicFinancials(symbol);
+                return NextResponse.json(data);
+            }
 
             default:
                 return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
     } catch (error: any) {
+        console.error("Stock API error:", error.message);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { formatCurrency, formatPercent, getPriceBgColor } from "@/lib/utils";
+import { formatCurrency, formatPercent } from "@/lib/utils";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface StockCardProps {
@@ -23,9 +23,14 @@ export default function StockCard({
                                   }: StockCardProps) {
     const isPositive = changePercent >= 0;
 
+    const badgeClass = isPositive
+        ? "bg-green-500/10 text-green-500"
+        : "bg-red-500/10 text-red-500";
+
     return (
         <Link href={`/stocks/${symbol}`}>
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 hover:border-white/20 hover:bg-zinc-800 transition-all cursor-pointer group">
+
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -48,13 +53,11 @@ export default function StockCard({
                         </div>
                     </div>
 
-                    <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${getPriceBgColor(changePercent)}`}
-                    >
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 ${badgeClass}`}>
             {isPositive ? (
-                <TrendingUp className="w-3 h-3 inline mr-1" />
+                <TrendingUp className="w-3 h-3" />
             ) : (
-                <TrendingDown className="w-3 h-3 inline mr-1" />
+                <TrendingDown className="w-3 h-3" />
             )}
                         {formatPercent(changePercent)}
           </span>
@@ -65,15 +68,12 @@ export default function StockCard({
                     <p className="text-2xl font-bold text-white">
                         {formatCurrency(currentPrice)}
                     </p>
-                    <p
-                        className={`text-sm mt-1 ${
-                            isPositive ? "text-green-500" : "text-red-500"
-                        }`}
-                    >
+                    <p className={`text-sm mt-1 ${isPositive ? "text-green-500" : "text-red-500"}`}>
                         {isPositive ? "+" : ""}
                         {formatCurrency(change)} today
                     </p>
                 </div>
+
             </div>
         </Link>
     );
